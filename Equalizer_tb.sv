@@ -4,9 +4,13 @@ module Equalizer_tb();
   //////////////////////////
 
   reg clk,RST_n;
+  reg 
   
+  wire [7:0] LEDS
+  wire [2:0] chnnl
   wire [15:0] aout_lft,aout_rht;
   
+  output reg AMP_ON;
   //////////////////////
   // Instantiate DUT //
   ////////////////////
@@ -28,7 +32,48 @@ module Equalizer_tb();
                .MISO(A2D_MISO),.MOSI(A2D_MOSI));
 				
   initial begin
+  file = $fopen(audio_out.csv, "w");
+  clk = 0;
+  RST_n =1;
+  lft_max = -3000;
+  lft_min = 3000;
+  rht_max = -3000;
+  rht_min = 3000;
+  rht_crossing = 0;
+  lft_crossing = 0;
+  lft_blanking = 0;
+  rht_blanking = 0;
+  lft_avg = 0;
+  rht_avg = 0;
   
+ //write the audio out to the file 
+  always@(posedge clk)
+    i = i+1;
+    if (i == 8195) begin
+    $fclose(file);
+    if (i>2) begin
+     $fdisplay ( file, aout_rht, aout_lft);
+    end
+  end
+  
+ //check the max and min of the left and right channels
+  always@(posedge clk) begin
+    if (aout_rht > rht_max)
+      rht_max = aout_rht;
+    if (aout_lft > lft_max)
+      lft_max = aout_lft;
+    if (aout_rht < rht_min)
+      rht_min = aout_rht;
+    if (aout_lft < lft_max)
+      lft_min = aout_lft;      
+  end
+  
+  //check for the crossings
+  always@(posedge clk) begin
+    if(aout_rht == 0)
+     rht_crossing = rht_crossing+1;
+    if(aout_lft == 0)
+     lft_crossing = lft_crossing+1;  
   end
   
   always
