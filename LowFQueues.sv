@@ -17,14 +17,17 @@ reg [9:0]		end_ptr;
 
 // Declare status registers for high and low queues
 //// Define low frequency Registers 
-reg 			full_reg, read;	//Low freq Q is full, when it is prepped to read, signal defining when to read samples
+reg 			full_reg;			//Low freq Q is full
 reg [9:0]		cnt;				//Counts how many addresses have samples writen to them
 
 // Define wrt_smpl counter
 reg			wrt_en;		// Keeps track of every other valid signal
 
+// Define buffer for output data
+reg [15:0] 	data_out;
+
 /* ------ Instantiate the dual port modules -------------------------------------------------------- */
-dualPort1024x16 i1024Port(.clk(clk),.we(wrt_en),.waddr(new_ptr),.raddr(read_ptr),.wdata(new_smpl),.rdata(smpl_out));
+dualPort1024x16 i1024Port(.clk(clk),.we(wrt_en),.waddr(new_ptr),.raddr(read_ptr),.wdata(new_smpl),.rdata(data_out));
 
 /* ------ Always Block to Update Pointers ---------------------------------------------------------- */
 always @(posedge wrt_en, negedge rst_n) begin 
@@ -42,36 +45,38 @@ end
 always @(posedge clk, negedge rst_n)
 	if(!rst_n)
 		read_ptr <= 10'h000;
-	else if(read)
+	else if(sequencing)
 		read_ptr <= next_read;
 		
 //Update Sequencing
-assign sequencing = read;
+assign sequencing 	= (new_ptr == end_ptr);
+assign smpl_out 	= (sequencing) ? data_out : 16'hxxxx;
 
 /* ------ Control for read/write pointers and empty/full registers -------------------------------- */
 assign end_ptr		= old_ptr + 10'd1020;
-assign full_reg		= &cnt;
-assign read			= (new_ptr == end_ptr) & wrt_en;
+assign full_reg		= &cnt;		
 
 /* ------ Manage Next Read/Write Pointers --------------------------------------------------------- */
-always @(posedge wrt_smpl, negedge rst_n) begin
+always @(negedge wrt_smpl, negedge rst_n) begin
 	if(!rst_n)
-		next_new <= 10'h001;
+		next_new <= 10'h000;
 	else
 		next_new <= new_ptr + 1; 
 end
 
-always @(posedge wrt_smpl, negedge rst_n) begin
+always @(negedge wrt_smpl, negedge rst_n) begin
 	if(!rst_n)
-		next_old <= 10'h001;
-	else if (read)
+		next_old <= 10'h000;
+	else if (sequencing)
 		next_old <= old_ptr + 1;
 end
 
 always @(posedge clk, negedge rst_n) begin
 	if (!rst_n)
-		next_read <= 10'h001;
-	else if (read & read_ptr != new_ptr - 1)
+		next_read <= 10'h000;
+	else if(read_ptr == end_ptr)
+		next_read <= old_ptr;
+	else if (sequencing)
 		next_read <= read_ptr + 1;
 	else
 		next_read <= old_ptr;
