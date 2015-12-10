@@ -4,7 +4,7 @@ module Equalizer_tb();
   //////////////////////////
 
   reg clk,RST_n;
-  reg 
+  integer rsum,lsum, i;
   
   wire [7:0] LEDS
   wire [2:0] chnnl
@@ -34,6 +34,7 @@ module Equalizer_tb();
   initial begin
   file = $fopen(audio_out.csv, "w");
   clk = 0;
+  i = 0;
   RST_n =1;
   lft_max = -3000;
   lft_min = 3000;
@@ -52,7 +53,7 @@ module Equalizer_tb();
     if (i == 8195) begin
     $fclose(file);
     if (i>2) begin
-     $fdisplay ( file, aout_rht, aout_lft);
+     $fdisplay ( file,"%d,%d", aout_rht, aout_lft);
     end
   end
   
@@ -66,6 +67,14 @@ module Equalizer_tb();
       rht_min = aout_rht;
     if (aout_lft < lft_max)
       lft_min = aout_lft;      
+  end
+  
+  //get the averages of the signals
+  always@(posedge clk) begin
+    rsum = rsum+ aout_rht;
+    lsum = lsum+ aout_lft;
+    lft_avg = lsum/i;
+    rht_avg = rsum/i;
   end
   
   //check for the crossings
