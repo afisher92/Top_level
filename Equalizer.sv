@@ -21,6 +21,7 @@ output RSTn;			// active low reset to CODEC
 wire rst_n;				// internal global active low reset
 wire valid;
 wire strt_cnv,cnv_cmplt,valid_fall,valid_rise;
+wire sequencing;
 wire [15:0] lft_in,rht_in;
 wire [15:0] lft_out,rht_out,lft_out_sel,rht_out_sel;
 wire [2:0] chnnl;
@@ -44,8 +45,8 @@ A2D_intf iA2D(.clk(clk),.rst_n(rst_n),.strt_cnv(strt_cnv),.cnv_cmplt(cnv_cmplt),
 // Instantiate Your Slide Pot Interface //
 /////////////////////////////////////////
 slide_intf iSLD(.clk(clk), .rst_n(rst_n), .strt_cnv(strt_cnv), .chnnl(chnnl), .cnv_cmplt(cnv_cmplt), .res(res),
-                .LP_gain(LP_gain), .B1_gain(B1_gain), .B2_gain(B2_gain), .B3_gain(B3_gain), .HP_gain(HP_gain),
-                .volume(volume));		
+                .POT_LP(LP_gain), .POT_B1(B1_gain), .POT_B2(B2_gain), .POT_B3(B3_gain), .POT_HP(HP_gain),
+                .VOLUME(volume));		
 				
 ///////////////////////////////////////
 // Instantiate Your CODEC Interface //
@@ -56,18 +57,19 @@ codec_intf iCS(.clk(clk), .rst_n(rst_n), .lft_in(lft_in), .rht_in(rht_in), .lft_
 ///////////////////////////////////
 // Instantiate Equalizer Engine //
 /////////////////////////////////
-
+EQ_Engine iEQ(.clk(clk), .rst_n(rst_n), .valid(valid), .lft_in(lft_in), .rht_in(rht_in), .LP_gain(LP_gain), .B1_gain(B1_gain),
+					.B2_gain(B2_gain), .B3_gain(B3_gain), .HP_gain(HP_gain), .volume(volume), .lft_out(lft_out), 
+					.rht_out(rht_out), .sequencing(sequencing));
 
 ////////////////////////////////////////////////////////////
 // Instantiate LED effect driver (optional extra credit) //
 //////////////////////////////////////////////////////////
- 
+// LEDicks
 
 ///////////////////////////////////////////////
 // Implement logic for delaying Amp on till //
 // after queues are steady.   (AMP_ON)     //
 ////////////////////////////////////////////
-
-
+assign AMP_ON = (sequencing);
 
 endmodule
