@@ -10,6 +10,7 @@ module EQ_Engine (
 	input [11:0] B1_gain;
 	input [11:0] HP_gain;
 	input [11:0] volume;
+	output sequencing;
 	output [15:0] lft_out;
 	output [15:0] rht_out;
 );
@@ -34,6 +35,7 @@ reg [15:0] lft_sum, rht_sum;
 
 // Output signals
 wire [15:0] lft_out, rht_out;
+reg sequencing;
 
 /* Instantiate the low and high frequency queues for left signal */
 LowFQueues ilft_LFQ(.clk(clk), .rst_n(rst_n), .new_smpl(lft_in), .wrt_smpl(valid), 
@@ -84,6 +86,9 @@ rht_sum = RLP_scaled + RB1_scaled + RB2_scaled + RB3_scaled + RHP_scaled;
 /* Scale by volume */
 assign lft_out = volume * lft_sum;
 assign rht_out = volume * rht_sum;
+
+/* sequencing output logic */
+assign sequencing = (LLF_seq & LHF_seq & RLF_seq & RHF_seq);
 
 
 endmodule
