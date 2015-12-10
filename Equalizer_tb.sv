@@ -1,9 +1,10 @@
+`timescale 1ns/1ps
 module Equalizer_tb();
   ////////////////////////////
   // Shell of a test bench //
   //////////////////////////
 
-  reg clk,RST_n;
+  reg clk,rst_n;
   integer rsum,lsum, i;
   
   wire [7:0] LEDS
@@ -35,7 +36,7 @@ module Equalizer_tb();
   file = $fopen(audio_out.csv, "w");
   clk = 0;
   i = 0;
-  RST_n =1;
+  rst_n = 0;
   lft_max = -3000;
   lft_min = 3000;
   rht_max = -3000;
@@ -46,6 +47,11 @@ module Equalizer_tb();
   rht_blanking = 0;
   lft_avg = 0;
   rht_avg = 0;
+  
+  @(posedge clk);
+  @(negedge clk);
+  RST_n = 1;
+  end
   
  //write the audio out to the file 
   always@(posedge clk)
