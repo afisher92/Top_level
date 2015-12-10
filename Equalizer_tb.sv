@@ -9,7 +9,7 @@ module Equalizer_tb();
   wire [7:0] LEDS;
   wire [2:0] chnnl;
   wire [15:0] aout_lft,aout_rht;
-  integer lft_max, lft_min, rht_max, rht_min, rht_crossing, lft_crossing, lft_blanking, rht_blanking, lft_avg, rht_avg, file, i, rsum, lsum;
+  integer lft_max, lft_min, rht_max, rht_min, rht_crossing, lft_crossing, lft_blanking, rht_blanking, lft_avg, rht_avg, file, rsum, lsum;
   reg [15:0] scoobydoo[8191:0];
   //////////////////////
   // Instantiate DUT //
@@ -53,13 +53,10 @@ module Equalizer_tb();
 end  
 
  //write the audio out to the file 
- // always@(posedge clk) begin
- //   i = i+1;
- //   if (i == 8195)
- //    $fclose(file);	
- //   if (i>2) 
- //    $fdisplay ( file, aout_rht, aout_lft);
- // end
+ always@(posedge LRCLK) begin
+
+     $fdisplay ( file, aout_rht, aout_lft);
+  end
   
  //check the max and min of the left and right channels
   always@(posedge clk) begin
