@@ -5,7 +5,7 @@ input [11:0] res;
 
 output reg [2:0]chnnl;
 output reg strt_cnv;
-output reg [11:0]POT_LP, POT_B1, POT_B2, POT_B3, POT_HP, VOLUME;
+output reg [12:0]POT_LP, POT_B1, POT_B2, POT_B3, POT_HP, VOLUME;
 
 reg [2:0]cnt;
 reg state, nxtstate;
