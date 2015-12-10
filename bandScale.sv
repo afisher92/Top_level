@@ -1,4 +1,4 @@
-module bandScale(scaled, POT, audio, clk);
+module bandScale(clk, POT, audio, scaled);
 
 input [11:0] POT;
 input clk;
