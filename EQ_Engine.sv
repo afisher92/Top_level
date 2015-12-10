@@ -1,0 +1,89 @@
+module EQ_Engine (
+	input clk;
+	input rst_n;
+	input valid;
+	input [15:0] lft_in;
+	input [15:0] rht_in;
+	input [11:0] LP_gain;
+	input [11:0] B1_gain;
+	input [11:0] B2_gain;
+	input [11:0] B1_gain;
+	input [11:0] HP_gain;
+	input [11:0] volume;
+	output [15:0] lft_out;
+	output [15:0] rht_out;
+);
+
+// Define outputs of the low and high pass queeues
+wire [15:0] lft_LF, lft_HF, rht_LF, rht_HF;
+wire LLF_seq, LHF_seq, RLF_seq, RHF_seq;	// queue sequencing status register
+
+// Define signal outputs of the filters
+wire [15:0] LP_rhtOut, LP_lftOut;	// Low pass filter outputs
+wire [15:0] B1_rhtOut, B1_lftOut;	// Low Band pass filter outputs
+wire [15:0] B2_rhtOut, B2_lftOut;	// Mid Band pass filter outputs
+wire [15:0] B3_rhtOut, B3_lftOut;	// High Band pass filter outputs
+wire [15:0] HP_rhtOut, HP_lftOut;	// High pass filter outputs
+
+// Define scaled signal outputs from the band scaling 
+wire [15:0] LLP_scaled, LB1_scaled, LB2_scaled, LB3_scaled, LHP_scaled;
+wire [15:0] RLP_scaled, RB1_scaled, RB2_scaled, RB3_scaled, RHP_scaled;
+
+// Define summed signals
+reg [15:0] lft_sum, rht_sum;
+
+// Output signals
+wire [15:0] lft_out, rht_out;
+
+/* Instantiate the low and high frequency queues for left signal */
+LowFQueues ilft_LFQ(.clk(clk), .rst_n(rst_n), .new_smpl(lft_in), .wrt_smpl(valid), 
+					.smpl_out(lft_LF), .sequencing(LLF_seq));
+HiFQueues ilft_HFQ(.clk(clk), .rst_n(rst_n), .new_smpl(lft_in), .wrt_smpl(valid), 
+					.smpl_out(lft_HF), .sequencing(LHF_seq));
+					
+/* Instantiate the low and high frequency queues for right signal */
+LowFQueues irht_LFQ(.clk(clk), .rst_n(rst_n), .new_smpl(rht_in), .wrt_smpl(valid), 
+					.smpl_out(rht_LF), .sequencing(RLF_seq));
+HiFQueues irht_HFQ(.clk(clk), .rst_n(rst_n), .new_smpl(rht_in), .wrt_smpl(valid), 
+					.smpl_out(rht_HF), .sequencing(RHF_seq));
+					
+/* Instantiate the filters */
+LPfilt iLP(.rght_in(rht_LF), .lft_in(lft_LF), .rst_n(rst_n), .rght_out(LP_rhtOut), 
+					.lft_out(LP_lftOut), .clk(clk));
+B1filt iB1(.rght_in(rht_LF), .lft_in(lft_LF), .rst_n(rst_n), .rght_out(B1_rhtOut), 
+					.lft_out(B1_lftOut), .clk(clk));
+B2filt iB2(.rght_in(rht_LF), .lft_in(lft_LF), .rst_n(rst_n), .rght_out(B2_rhtOut), 
+					.lft_out(B2_lftOut), .clk(clk));
+B3filt iB3(.rght_in(rht_HF), .lft_in(lft_HF), .rst_n(rst_n), .rght_out(B3_rhtOut), 
+					.lft_out(B3_lftOut), .clk(clk));
+HPfilt iHP(.rght_in(rht_HF), .lft_in(lft_HF), .rst_n(rst_n), .rght_out(HP_rhtOut), 
+					.lft_out(HP_lftOut), .clk(clk));
+					
+/* Instantiate the Band Scaling */
+// Left signals
+bandScale iLLP(.clk(clk), .POT(LP_gain), .audio(LP_lftOut), .scaled(LLP_scaled));
+bandScale iLB1(.clk(clk), .POT(LP_gain), .audio(LP_lftOut), .scaled(LB1_scaled));
+bandScale iLB2(.clk(clk), .POT(LP_gain), .audio(LP_lftOut), .scaled(LB2_scaled));
+bandScale iLB3(.clk(clk), .POT(LP_gain), .audio(LP_lftOut), .scaled(LB3_scaled));
+bandScale iLHP(.clk(clk), .POT(LP_gain), .audio(LP_lftOut), .scaled(LHP_scaled));
+
+// Right signals
+bandScale iRLP(.clk(clk), .POT(LP_gain), .audio(LP_lftOut), .scaled(RLP_scaled));
+bandScale iRB1(.clk(clk), .POT(LP_gain), .audio(LP_lftOut), .scaled(RB1_scaled));
+bandScale iRB2(.clk(clk), .POT(LP_gain), .audio(LP_lftOut), .scaled(RB2_scaled));
+bandScale iRB3(.clk(clk), .POT(LP_gain), .audio(LP_lftOut), .scaled(RB3_scaled));
+bandScale iRHP(.clk(clk), .POT(LP_gain), .audio(LP_lftOut), .scaled(RHP_scaled));
+
+/* Sum scaled signals */
+// Left Signals
+lft_sum = LLP_scaled + LB1_scaled + LB2_scaled + LB3_scaled + LHP_scaled;
+
+// Right Signals
+rht_sum = RLP_scaled + RB1_scaled + RB2_scaled + RB3_scaled + RHP_scaled;
+
+/* Scale by volume */
+assign lft_out = volume * lft_sum;
+assign rht_out = volume * rht_sum;
+
+
+endmodule
