@@ -44,7 +44,7 @@ always @(posedge clk, negedge rst_n)
 
 //Update Sequencing
 assign sequencing = (cnt == 1531);
-assign smpl_out   = (sequencing) ? data_out : 16'hxxxx;
+assign smpl_out   = (sequencing) ? data_out : 16'h0000;
 
 /* ------ Manage pointers in high frequency queue ------------------------------------------------- */
 always @(posedge clk, negedge rst_n)
