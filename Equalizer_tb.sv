@@ -9,7 +9,7 @@ module Equalizer_tb();
   wire [7:0] LEDS;
   wire [2:0] chnnl;
   reg [15:0] aout_lft,aout_rht;
-  integer lft_max, lft_min, rht_max, rht_min, rht_crossing, lft_crossing, lft_blanking, rht_blanking, lft_avg, rht_avg, i, file, rsum, lsum;
+  integer lft_max, j, lft_min, rht_max, rht_min, rht_crossing, lft_crossing, lft_blanking, rht_blanking, lft_avg, rht_avg, i, file, rsum, lsum;
   //////////////////////
   // Instantiate DUT //
   ////////////////////
@@ -31,7 +31,6 @@ module Equalizer_tb();
                .MISO(A2D_MISO),.MOSI(A2D_MOSI));
 				
   initial begin
-  file = $fopen("results.csv");
   clk = 0;
   i = 0;
   aout_lft = 0;
@@ -54,11 +53,21 @@ module Equalizer_tb();
   @(negedge clk)
   RST_n = 1;
   rst_n = 1;
+  #5;
+  file = $fopen("results.csv");
 end  
 
  //write the audio out to the file 
-always@(posedge LRCLK) begin
-   $fdisplay ( file,"%d,%d", aout_rht, aout_lft);
+always@(posedge LRCLK, negedge rst_n) begin
+   if(!rst_n)
+     j = 1;
+   else 
+     $fdisplay (file,"%d,%d", aout_rht, aout_lft);
+   if (j>= 80)begin
+     $fclose(file);
+     $stop;
+   end
+   	 j = j + 1;
 end
   
  //check the max and min of the left and right channels
