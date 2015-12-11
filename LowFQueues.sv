@@ -50,7 +50,7 @@ always @(posedge clk, negedge rst_n)
 		
 //Update Sequencing
 assign sequencing 	= (new_ptr == end_ptr);
-assign smpl_out 	= (sequencing) ? data_out : 16'hxxxx;
+assign smpl_out 	= (sequencing) ? data_out : 16'h0000;
 
 /* ------ Control for read/write pointers and empty/full registers -------------------------------- */
 assign end_ptr		= old_ptr + 10'd1020;
