@@ -4,13 +4,12 @@ module Equalizer_tb();
   // Shell of a test bench //
   //////////////////////////
 
-  reg clk,RST_n, rst_n;
+  reg clk,RST_n, rst_n, LRCLK;
   
   wire [7:0] LEDS;
   wire [2:0] chnnl;
-  wire [15:0] aout_lft,aout_rht;
-  integer lft_max, lft_min, rht_max, rht_min, rht_crossing, lft_crossing, lft_blanking, rht_blanking, lft_avg, rht_avg, file, i, rsum, lsum;
-  reg [15:0] scoobydoo[8191:0];
+  reg [15:0] aout_lft,aout_rht;
+  integer lft_max, lft_min, rht_max, rht_min, rht_crossing, lft_crossing, lft_blanking, rht_blanking, lft_avg, rht_avg, i, file, rsum, lsum;
   //////////////////////
   // Instantiate DUT //
   ////////////////////
@@ -34,16 +33,21 @@ module Equalizer_tb();
   initial begin
   file = $fopen("results.csv");
   clk = 0;
+  i = 0;
+  aout_lft = 0;
+  aout_rht = 0;
   RST_n = 0;
   rst_n = 0;
-  lft_max = -3000;
+  lft_max = 0;
   lft_min = 3000;
-  rht_max = -3000;
+  rht_max = 0;
   rht_min = 3000;
   rht_crossing = 0;
   lft_crossing = 0;
   lft_blanking = 0;
   rht_blanking = 0;
+  lsum = 0;
+  rsum = 0;
   lft_avg = 0;
   rht_avg = 0;
   @(posedge clk)
@@ -53,13 +57,9 @@ module Equalizer_tb();
 end  
 
  //write the audio out to the file 
- // always@(posedge clk) begin
- //   i = i+1;
- //   if (i == 8195)
- //    $fclose(file);	
- //   if (i>2) 
- //    $fdisplay ( file, aout_rht, aout_lft);
- // end
+always@(posedge LRCLK) begin
+   $fdisplay ( file,"%d,%d", aout_rht, aout_lft);
+end
   
  //check the max and min of the left and right channels
   always@(posedge clk) begin
@@ -82,6 +82,7 @@ end
   end
   
   always@(posedge clk) begin
+   i = i+1;
    rsum = rsum + aout_rht;
    lsum = lsum + aout_lft;
    lft_avg = lsum/i;
